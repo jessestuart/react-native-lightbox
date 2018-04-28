@@ -343,6 +343,7 @@ export default class LightboxOverlay extends Component {
     const {
             isOpen,
             renderHeader,
+            renderFooter,
             swipeToDismiss,
             scalable,
             origin,
