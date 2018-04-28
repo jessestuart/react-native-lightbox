@@ -386,7 +386,7 @@ export default class LightboxOverlay extends Component {
     } ];
 
     const background = (<Animated.View
-      style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}></Animated.View>);
+      style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
     const header = (<Animated.View style={[ styles.header, lightboxOpacityStyle ]}>{(renderHeader ?
         renderHeader(this.close) :
         (
