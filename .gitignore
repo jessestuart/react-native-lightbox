@@ -24,3 +24,5 @@ build/Release
 node_modules
 
 .gradle
+
+.idea
