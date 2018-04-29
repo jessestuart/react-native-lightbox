@@ -210,6 +210,7 @@ export default class LightboxOverlay extends Component {
         }
       },
       onPanResponderMove                : (evt, gestureState) => {
+        this.hideIcons = false;
         clearTimeout(this.tap4toggle);
 
         // zoom
@@ -294,15 +295,11 @@ export default class LightboxOverlay extends Component {
 
   tap(currentTouchTimeStamp, { x0, y0 }) {
     this.tap4toggle = setTimeout(() => {
-
       if (this.state.scale > 1) {
-        this.toggleIcons();
+        this.hideIcons = true
       }
-      else if (this.state.scale <= 1 && this.preScale <= 1) {
-        this.toggleIcons();
-      }
-
-    }, this.delay + 10);
+      this.toggleIcons();
+    }, this.delay / 3);
   }
 
   // is double tap or not
@@ -326,6 +323,7 @@ export default class LightboxOverlay extends Component {
     if (this.state.scale !== 1) {
       this.resetOverlay();
     } else {
+      this.hideIcons = true
       this.setState({
         scale    : 1.8,
         lastScale: 1.8,
