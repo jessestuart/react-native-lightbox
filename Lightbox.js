@@ -1,4 +1,4 @@
-import React, { Component,  Children, cloneElement } from 'react';
+import React, { Component, Children, cloneElement } from 'react';
 import PropTypes from 'prop-types';
 import { Animated, TouchableHighlight, View } from 'react-native';
 
@@ -7,21 +7,22 @@ import './Gallery';
 
 export default class Lightbox extends Component {
   static propTypes = {
-    activeProps:     PropTypes.object,
-    renderHeader:    PropTypes.func,
-    renderFooter:    PropTypes.func,
-    renderContent:   PropTypes.func,
-    underlayColor:   PropTypes.string,
+    activeProps    : PropTypes.object,
+    images         : PropTypes.array,
+    renderHeader   : PropTypes.func,
+    renderFooter   : PropTypes.func,
+    renderContent  : PropTypes.func,
+    underlayColor  : PropTypes.string,
     backgroundColor: PropTypes.string,
-    didOpen:         PropTypes.func,
-    onOpen:          PropTypes.func,
-    willClose:       PropTypes.func,
-    onClose:         PropTypes.func,
-    springConfig:    PropTypes.shape({
-      tension:       PropTypes.number,
-      friction:      PropTypes.number,
+    didOpen        : PropTypes.func,
+    onOpen         : PropTypes.func,
+    willClose      : PropTypes.func,
+    onClose        : PropTypes.func,
+    springConfig   : PropTypes.shape({
+      tension : PropTypes.number,
+      friction: PropTypes.number,
     }),
-    swipeToDismiss:  PropTypes.bool,
+    swipeToDismiss : PropTypes.bool,
 
     renderMask: PropTypes.func,
 
@@ -29,33 +30,43 @@ export default class Lightbox extends Component {
 
   static defaultProps = {
     swipeToDismiss: true,
-    onOpen: () => {},
-    didOpen: () => {},
-    willClose: () => {},
-    onClose: () => {},
-    renderMask: () => {},
+    onOpen        : () => {
+    },
+    didOpen       : () => {
+    },
+    willClose     : () => {
+    },
+    onClose       : () => {
+    },
+    renderMask    : () => {
+    },
 
   };
 
   state = {
-    isOpen: false,
-    origin: {
-      x: 0,
-      y: 0,
-      width: 0,
+    isOpen       : false,
+    origin       : {
+      x     : 0,
+      y     : 0,
+      width : 0,
       height: 0,
     },
     layoutOpacity: new Animated.Value(1),
 
   };
 
-  componentWillMount(){
-    if (this.props.galleryMode){
+  componentWillMount() {
+    if (this.props.galleryMode) {
       var GKeyArray = global.gallery.get(this.props.GKey);
-      if (!!GKeyArray){
-        GKeyArray.push(this.props.children)
+
+      var children = cloneElement(
+        Children.only(this.props.children),
+        this.props.activeProps
+      );
+      if (!!GKeyArray) {
+        GKeyArray.push(children)
       } else {
-        GKeyArray = [this.props.children]
+        GKeyArray = [ children ]
       }
 
       global.gallery.set(this.props.GKey, GKeyArray);
@@ -63,24 +74,25 @@ export default class Lightbox extends Component {
 
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     global.gallery.delete(this.props.GKey);
   }
 
   getOverlayProps = () => ({
-    isOpen: this.state.isOpen,
-    origin: this.state.origin,
-    renderHeader: this.props.renderHeader,
-    renderFooter: this.props.renderFooter,
-    swipeToDismiss: this.props.swipeToDismiss,
-    springConfig: this.props.springConfig,
+    isOpen         : this.state.isOpen,
+    origin         : this.state.origin,
+    renderHeader   : this.props.renderHeader,
+    renderFooter   : this.props.renderFooter,
+    swipeToDismiss : this.props.swipeToDismiss,
+    springConfig   : this.props.springConfig,
     backgroundColor: this.props.backgroundColor,
-    children: this.props.children,//this.getContent(),
-    activeProps: this.props.activeProps,
-    renderContent: this.props.renderContent,
-    didOpen: this.props.didOpen,
-    willClose: this.props.willClose,
-    onClose: this.onClose,
+    children       : this.props.children,//this.getContent(),
+    activeProps    : this.props.activeProps,
+    images         : this.props.images,
+    renderContent  : this.props.renderContent,
+    didOpen        : this.props.didOpen,
+    willClose      : this.props.willClose,
+    onClose        : this.onClose,
   })
 
   open = () => {
@@ -88,9 +100,9 @@ export default class Lightbox extends Component {
       this.props.onOpen();
 
       this.setState({
-        isOpen: (this.props.navigator ? true : false),
+        isOpen     : (this.props.navigator ? true : false),
         isAnimating: true,
-        origin: {
+        origin     : {
           width,
           height,
           x: px,
@@ -98,7 +110,7 @@ export default class Lightbox extends Component {
         },
       }, () => {
         this.props.didOpen();
-        if(this.props.navigator) {
+        if (this.props.navigator) {
           const route = {
             component: LightboxOverlay,
             passProps: this.getOverlayProps(),
@@ -112,7 +124,8 @@ export default class Lightbox extends Component {
           });
         }
         setTimeout(() => {
-          this._root && this.state.layoutOpacity.setValue(0);
+          // don't hide old picture
+          // this._root && this.state.layoutOpacity.setValue(0);
         });
       });
     });
@@ -127,7 +140,7 @@ export default class Lightbox extends Component {
     this.setState({
       isOpen: false,
     }, this.props.onClose);
-    if(this.props.navigator) {
+    if (this.props.navigator) {
       const routes = this.props.navigator.getCurrentRoutes();
       routes.pop();
       this.props.navigator.immediatelyResetRouteStack(routes);
@@ -135,9 +148,9 @@ export default class Lightbox extends Component {
   }
 
   _renderMask = () => {
-    if(this.props.renderMask) {
+    if (this.props.renderMask) {
       return (
-        <View style={{position: 'absolute'}}>
+        <View style={{ position: 'absolute' }}>
           {this.props.renderMask()}
         </View>
       );
@@ -151,20 +164,24 @@ export default class Lightbox extends Component {
       <View
         ref={component => this._root = component}
         style={this.props.style}
-        onLayout={() => {}}
+        onLayout={() => {
+        }}
       >
-        <Animated.View style={{opacity: this.state.layoutOpacity}}>
+        <Animated.View style={{ opacity: this.state.layoutOpacity }}>
           <TouchableHighlight
             underlayColor={this.props.underlayColor}
             onPress={this.open}
           >
-          <View style={{alignItems: 'center', justifyContent: 'center'}}>
-            {this.props.children}
-            {this._renderMask()}
-          </View>
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              {this.props.children}
+              {this._renderMask()}
+            </View>
           </TouchableHighlight>
         </Animated.View>
-        {this.props.navigator ? false : <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey} {...this.getOverlayProps()} />}
+        {
+          this.props.navigator ? false :
+            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey} {...this.getOverlayProps()} />
+        }
       </View>
     );
   }

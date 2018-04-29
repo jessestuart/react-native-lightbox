@@ -10,12 +10,15 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Easing
 } from 'react-native';
+import Image from "react-native-fast-image";
+import { DEVICE } from "../../src/constants/device";
 
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 const WINDOW_WIDTH = Dimensions.get('window').width;
-const DRAG_DISMISS_THRESHOLD = 150;
+const DRAG_DISMISS_THRESHOLD = 80;
 const DRAG_SWIPE_THRESHOLD = WINDOW_WIDTH / 3;
 // const STATUS_BAR_OFFSET = (Platform.OS === 'android' ? -25 : 0);
 const isIOS = Platform.OS === 'ios';
@@ -65,6 +68,7 @@ const styles = StyleSheet.create({
   },
 });
 
+
 export default class LightboxOverlay extends Component {
   static propTypes = {
     origin         : PropTypes.shape({
@@ -94,23 +98,24 @@ export default class LightboxOverlay extends Component {
   };
 
   state = {
-    isAnimating: false,
-    isPanning  : false,
-    isSwiping  : false,
-    target     : {
+    isAnimating : false,
+    isPanning   : false,
+    isReleaseing: false,
+    isSwiping   : false,
+    target      : {
       x      : 0,
       y      : 0,
       opacity: 1,
     },
-    pan        : new Animated.Value(0),
-    openVal    : new Animated.Value(0),
+    pan         : new Animated.Value(0),
+    openVal     : new Animated.Value(0),
     // for scalable
-    scale      : 1,
-    lastScale  : 1,
-    offsetX    : 0,
-    offsetY    : 0,
-    lastX      : 0,
-    lastY      : 0,
+    scale       : 1,
+    lastScale   : 1,
+    offsetX     : 0,
+    offsetY     : 0,
+    lastX       : 0,
+    lastY       : 0,
 
     currentChildren: this.props.children,
   };
@@ -123,24 +128,41 @@ export default class LightboxOverlay extends Component {
     prevTouchY        : 0,
     prevTouchTimeStamp: 0,
   };
+  isReleaseing = false;
 
   getContent = () => {
     if (this.props.renderContent) {
       return this.props.renderContent();
-    } else if (this.props.activeProps) {
+    }
+    // else if (this.props.images) {
+    //   console.log(this.props.images)
+    //   return this.props.images.map((tmp, index_b) => (
+    //     <Image
+    //       key={index_b}
+    //       source={{ uri: tmp.url || tmp }}
+    //       style={{ width: '100%', height: 200 }}
+    //       resizeMode={Image.resizeMode.contain}
+    //     />
+    //   ))
+    // }
+    else if (this.props.activeProps) {
       return cloneElement(
         Children.only(this.state.currentChildren),
         this.props.activeProps
+        // Object.assign(this.props.activeProps, { style: { width: '100%', height: WINDOW_HEIGHT, opacity: this.imageOpacityStyle.opacity} }),
       );
     }
-    return this.state.currentChildren;
+    return cloneElement(
+      Children.only(this.state.currentChildren)
+    )
+    // return this.state.currentChildren;
   }
 
   componentWillMount() {
     this._panResponder = PanResponder.create({
       // Ask to be the responder:
       onStartShouldSetPanResponder      : (evt, gestureState) => {
-        return !this.state.isAnimating;
+        return true; //!this.state.isAnimating;
       },
       onMoveShouldSetPanResponder       : (evt, gestureState) => {
         if (this.state.isAnimating) {
@@ -203,17 +225,23 @@ export default class LightboxOverlay extends Component {
             lastScale: this.state.scale
           });
         } else {
-          this.resetOverlay();
+          // this.resetOverlay();
           if (Math.abs(gestureState.dy) > DRAG_DISMISS_THRESHOLD) {
+            // hide overlay
             this.setState({
-              isPanning: false,
-              target   : {
-                y      : gestureState.dy,
-                x      : gestureState.dx,
-                opacity: 1 - Math.abs(gestureState.dy / WINDOW_HEIGHT)
+              isPanning   : false,
+              isReleaseing: true,
+              target      : {
+                y      : WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
+                x      : gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
+                // opacity: 1 - Math.abs(gestureState.dy / WINDOW_HEIGHT)
+                // offsetY: 1.5 * WINDOW_HEIGHT,
+                opacity: 0
               }
             });
-            this.close();
+
+            this.isReleaseing = true;
+            this.close(gestureState.dy);
           } else {
             Animated.spring(
               this.state.pan,
@@ -276,13 +304,14 @@ export default class LightboxOverlay extends Component {
     }
     this.state.pan.setValue(0);
     this.setState({
-      isAnimating: true,
-      target     : {
+      isAnimating : true,
+      target      : {
         x      : 0,
         y      : 0,
         opacity: 1,
       }
     });
+    this.isReleaseing = false;
 
     Animated.spring(
       this.state.openVal,
@@ -305,7 +334,11 @@ export default class LightboxOverlay extends Component {
     });
   }
 
-  close = () => {
+  close = (gestureStateDy) => {
+    if (!gestureStateDy) {
+      gestureStateDy = 0
+    }
+
     this.props.willClose();
     if (isIOS) {
       StatusBar.setHidden(false, 'fade');
@@ -313,17 +346,26 @@ export default class LightboxOverlay extends Component {
     this.setState({
       isAnimating: true,
     });
-    Animated.spring(
-      this.state.openVal,
-      { toValue: 0, ...this.props.springConfig }
-    ).start(() => {
+
+    Animated.parallel([
+      Animated.spring(
+        this.state.openVal, {
+          toValue: 1, ...this.props.springConfig
+        }),
+
+      Animated.timing(this.state.pan, {
+        toValue : gestureStateDy < 0 ? -WINDOW_HEIGHT : WINDOW_HEIGHT, // 目标值
+        duration: 200, // 动画时间
+        easing  : Easing.ease // 缓动函数
+      })
+    ]).start(() => {
       this.setState({
         isAnimating: false,
       });
       this.props.onClose();
-      // reset dispaly
       this.resetOverlay();
     });
+
   }
 
   componentWillReceiveProps(props) {
@@ -357,16 +399,29 @@ export default class LightboxOverlay extends Component {
             target,
           } = this.state;
 
+
     const lightboxOpacityStyle = {
       opacity: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ 0, target.opacity ] })
     };
+
+    const imageOpacityStyle = {
+      opacity: this.state.pan.interpolate({
+        inputRange : [ -WINDOW_HEIGHT, 0, WINDOW_HEIGHT ],
+        outputRange: [ 0.9, 1, 0.9]
+      }),
+    };
+    // 拖动或是释放时动态隐藏图片
+    if ((isPanning || this.isReleaseing)) {
+      imageOpacityStyle.top = this.state.pan
+      imageOpacityStyle.left = 0;
+    }
 
     let handlers;
     if (swipeToDismiss || scalable) {
       handlers = this._panResponder.panHandlers;
     }
 
-    let dragStyle;
+    let dragStyle = {};
     if (isPanning) {
       dragStyle = {
         top: this.state.pan,
@@ -377,9 +432,16 @@ export default class LightboxOverlay extends Component {
       });
     }
 
+    if (this.isReleaseing && !isPanning) {
+      // console.log('releasing animation:', this.state.pan, ': ', WINDOW_HEIGHT)
+      // dragStyle.top = this.state.pan.interpolate({
+      //   inputRange : [-WINDOW_HEIGHT, 0,  WINDOW_HEIGHT ],
+      //   outputRange: [-1, 0, 1]
+      // });
+    }
+
     const openStyle = [ styles.open, {
       left  : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.x, target.x ] }),
-      // top:    openVal.interpolate({inputRange: [0, 1], outputRange: [origin.y + STATUS_BAR_OFFSET, target.y + STATUS_BAR_OFFSET]}),
       top   : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.y, target.y ] }),
       width : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.width, WINDOW_WIDTH ] }),
       height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
@@ -387,6 +449,7 @@ export default class LightboxOverlay extends Component {
 
     const background = (<Animated.View
       style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
+
     const header = (<Animated.View style={[ styles.header, lightboxOpacityStyle ]}>{(renderHeader ?
         renderHeader(this.close) :
         (
@@ -395,15 +458,18 @@ export default class LightboxOverlay extends Component {
           </TouchableOpacity>
         )
     )}</Animated.View>);
+
+    // todo when drag dispear , animation
     const content = (
-      <Animated.View style={[ openStyle, dragStyle, {
+      <Animated.View style={[ openStyle, dragStyle, imageOpacityStyle, {
         transform: [
           { scaleX: this.state.scale },
           { scaleY: this.state.scale },
           { translateX: this.state.offsetX },
           { translateY: this.state.offsetY }
         ]
-      } ]} {...handlers}>
+      }
+      ]} {...handlers}>
         {this.getContent()}
       </Animated.View>
     );
