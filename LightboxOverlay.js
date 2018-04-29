@@ -118,6 +118,7 @@ export default class LightboxOverlay extends Component {
     },
     pan         : new Animated.Value(0),
     openVal     : new Animated.Value(0),
+    footerAni   : new Animated.Value(0),
     // for scalable
     scale       : 1,
     lastScale   : 1,
@@ -454,6 +455,8 @@ export default class LightboxOverlay extends Component {
     }
 
     let dragStyle = {};
+    let footerAniStyle = {};
+    let headerAniStyle = {};
     if (isPanning) {
       dragStyle = {
         top: this.state.pan,
@@ -461,6 +464,16 @@ export default class LightboxOverlay extends Component {
       lightboxOpacityStyle.opacity = this.state.pan.interpolate({
         inputRange : [ -WINDOW_HEIGHT, 0, WINDOW_HEIGHT ],
         outputRange: [ 0, 1, 0 ]
+      });
+
+      footerAniStyle.bottom = this.state.pan.interpolate({
+        inputRange : [ -40, 0, 40 ],
+        outputRange: [ -80, 0, -50 ]
+      });
+
+      headerAniStyle.top = this.state.pan.interpolate({
+        inputRange : [ -40, 0, 40 ],
+        outputRange: [ -50, 0, -80 ]
       });
     }
 
@@ -474,7 +487,7 @@ export default class LightboxOverlay extends Component {
     const background = (<Animated.View
       style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
 
-    const header = (<Animated.View style={[ styles.header, lightboxOpacityStyle ]}>{(renderHeader ?
+    const header = (<Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle ]}>{(renderHeader ?
         renderHeader(this.close) :
         (
           <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
@@ -499,7 +512,7 @@ export default class LightboxOverlay extends Component {
     );
 
     const footer = (
-      <Animated.View style={[ styles.footer, lightboxOpacityStyle ]}>
+      <Animated.View style={[ styles.footer, lightboxOpacityStyle, footerAniStyle ]}>
         {(renderFooter ? renderFooter() : null)}
       </Animated.View>);
 
