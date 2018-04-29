@@ -89,7 +89,7 @@ export default class Lightbox extends Component {
     swipeToDismiss : this.props.swipeToDismiss,
     springConfig   : this.props.springConfig,
     backgroundColor: this.props.backgroundColor,
-    children       : this.children, //this.props.children,//this.getContent(),
+    children       : this.props.children,//this.getContent(),
     activeProps    : this.props.activeProps,
     images         : this.props.images,
     renderContent  : this.props.renderContent,

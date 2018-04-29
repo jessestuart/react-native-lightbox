@@ -139,6 +139,7 @@ export default class LightboxOverlay extends Component {
     prevTouchTimeStamp: 0,
   };
   isReleaseing = false;
+  preScale = 1;
 
   getContent = () => {
     var children = null;
@@ -198,6 +199,7 @@ export default class LightboxOverlay extends Component {
         if (this.isDoubleTap(currentTouchTimeStamp, gestureState)) {
           this.doubleTapZoom();
         }
+        this.tap(currentTouchTimeStamp, gestureState);
         this.prevTouchInfo = {
           prevTouchX        : gestureState.x0,
           prevTouchY        : gestureState.y0,
@@ -208,6 +210,8 @@ export default class LightboxOverlay extends Component {
         }
       },
       onPanResponderMove                : (evt, gestureState) => {
+        clearTimeout(this.tap4toggle);
+
         // zoom
         if (gestureState.numberActiveTouches === 2) {
           // let dx = Math.abs(evt.nativeEvent.touches[0].pageX - evt.nativeEvent.touches[1].pageX);
@@ -248,6 +252,7 @@ export default class LightboxOverlay extends Component {
             this.setState({
               isPanning   : false,
               isReleaseing: true,
+              hideIcons   : false,
               target      : {
                 y      : WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
                 x      : gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
@@ -284,12 +289,38 @@ export default class LightboxOverlay extends Component {
     return Math.sqrt(Math.pow((x1 - x0), 2) + Math.pow((y1 - y0), 2));
   }
 
+  // is one tap or not
+  tap4toggle = null;
+
+  tap(currentTouchTimeStamp, { x0, y0 }) {
+    this.tap4toggle = setTimeout(() => {
+      if (this.state.scale <= 1 && this.preScale <= 1) {
+        this.toggleIcons();
+      }
+      if (this.state.scale > 1) {
+        this.toggleIcons();
+      }
+
+    }, this.delay + 100);
+  }
+
   // is double tap or not
   isDoubleTap(currentTouchTimeStamp, { x0, y0 }) {
     const { prevTouchX, prevTouchY, prevTouchTimeStamp } = this.prevTouchInfo;
     const dt = currentTouchTimeStamp - prevTouchTimeStamp;
 
-    return (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
+    var ret = (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
+    if (ret) {
+      clearTimeout(this.tap4toggle);
+    }
+
+    return ret;
+  }
+
+  toggleIcons() {
+    this.setState({
+      hideIcons: !this.state.hideIcons
+    });
   }
 
   doubleTapZoom() {
@@ -363,6 +394,7 @@ export default class LightboxOverlay extends Component {
     this.setState({
       currentIndex: 0,
       isAnimating : true,
+      hideIcons   : false,
     });
 
     Animated.parallel([
@@ -472,17 +504,22 @@ export default class LightboxOverlay extends Component {
       height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
     } ];
 
+    const hideIcons = { display: (this.state.hideIcons) ? 'none' : 'flex' }
+    this.preScale = this.state.scale;
+
+
     const background = (<Animated.View
       style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
 
-    const header = (<Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle ]}>{(renderHeader ?
-        renderHeader(this.close) :
-        (
-          <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
-            <Text style={styles.closeButton}>×</Text>
-          </TouchableOpacity>
-        )
-    )}</Animated.View>);
+    const header = (
+      <Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle, hideIcons ]}>{(renderHeader ?
+          renderHeader(this.close) :
+          (
+            <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
+              <Text style={styles.closeButton}>×</Text>
+            </TouchableOpacity>
+          )
+      )}</Animated.View>);
 
     // todo when drag dispear , animation
     const content = (
@@ -500,7 +537,8 @@ export default class LightboxOverlay extends Component {
     );
 
     const footer = (
-      <Animated.View style={[ styles.footer, lightboxOpacityStyle, footerAniStyle ]}>
+      <Animated.View
+        style={[ styles.footer, lightboxOpacityStyle, footerAniStyle, hideIcons ]}>
         {(renderFooter ? renderFooter() : null)}
       </Animated.View>);
 
