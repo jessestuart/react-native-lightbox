@@ -252,7 +252,6 @@ export default class LightboxOverlay extends Component {
             this.setState({
               isPanning   : false,
               isReleaseing: true,
-              hideIcons   : false,
               target      : {
                 y      : WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
                 x      : gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
@@ -263,6 +262,7 @@ export default class LightboxOverlay extends Component {
             });
 
             this.isReleaseing = true;
+            this.hideIcons = false;
             this.close(gestureState.dy);
           } else {
             Animated.spring(
@@ -294,14 +294,15 @@ export default class LightboxOverlay extends Component {
 
   tap(currentTouchTimeStamp, { x0, y0 }) {
     this.tap4toggle = setTimeout(() => {
-      if (this.state.scale <= 1 && this.preScale <= 1) {
-        this.toggleIcons();
-      }
+
       if (this.state.scale > 1) {
         this.toggleIcons();
       }
+      else if (this.state.scale <= 1 && this.preScale <= 1) {
+        this.toggleIcons();
+      }
 
-    }, this.delay + 100);
+    }, this.delay + 10);
   }
 
   // is double tap or not
@@ -318,9 +319,7 @@ export default class LightboxOverlay extends Component {
   }
 
   toggleIcons() {
-    this.setState({
-      hideIcons: !this.state.hideIcons
-    });
+    this.hideIcons = !this.hideIcons;
   }
 
   doubleTapZoom() {
@@ -387,6 +386,7 @@ export default class LightboxOverlay extends Component {
       gestureStateDy = 0
     }
 
+    this.hideIcons = false;
     this.props.willClose();
     if (isIOS) {
       StatusBar.setHidden(false, 'fade');
@@ -394,7 +394,6 @@ export default class LightboxOverlay extends Component {
     this.setState({
       currentIndex: 0,
       isAnimating : true,
-      hideIcons   : false,
     });
 
     Animated.parallel([
@@ -504,7 +503,7 @@ export default class LightboxOverlay extends Component {
       height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
     } ];
 
-    const hideIcons = { display: (this.state.hideIcons) ? 'none' : 'flex' }
+    const hideIconsStyle = { display: (this.hideIcons) ? 'none' : 'flex' }
     this.preScale = this.state.scale;
 
 
@@ -512,7 +511,7 @@ export default class LightboxOverlay extends Component {
       style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
 
     const header = (
-      <Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle, hideIcons ]}>{(renderHeader ?
+      <Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle, hideIconsStyle ]}>{(renderHeader ?
           renderHeader(this.close) :
           (
             <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
@@ -538,7 +537,7 @@ export default class LightboxOverlay extends Component {
 
     const footer = (
       <Animated.View
-        style={[ styles.footer, lightboxOpacityStyle, footerAniStyle, hideIcons ]}>
+        style={[ styles.footer, lightboxOpacityStyle, footerAniStyle, hideIconsStyle ]}>
         {(renderFooter ? renderFooter() : null)}
       </Animated.View>);
 
