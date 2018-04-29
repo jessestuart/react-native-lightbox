@@ -167,7 +167,7 @@ export default class LightboxOverlay extends Component {
       )
     }
 
-    return this.state.currentChildren;
+    return children;
     // return this.state.currentChildren;
   }
 
@@ -340,21 +340,9 @@ export default class LightboxOverlay extends Component {
   }
 
   swiper = (forward) => {
-    console.log('forward:', forward);
-    // console.log('children:', this.state.currentChildren);
     var galleryKeyArray = global.gallery.get(this.props.GKey);
-    console.log('galleryKeyArray:', galleryKeyArray);
-
-    // var currentIndex = galleryKeyArray.map((e) => {
-    //   return e._owner
-    // }).indexOf(this.state.currentChildren._owner);
-
     currentIndex = this.state.currentIndex || this.props.currentIndex;
-    console.log('currentIndex:', currentIndex);
-
-
     var nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
-    console.log('nextIndex:', nextIndex);
 
     this.setState({
       currentIndex   : nextIndex,
