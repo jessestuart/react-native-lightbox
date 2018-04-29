@@ -43,6 +43,8 @@ export default class Lightbox extends Component {
 
   };
 
+  children = null;
+
   state = {
     isOpen       : false,
     origin       : {
@@ -63,6 +65,7 @@ export default class Lightbox extends Component {
         Children.only(this.props.children),
         this.props.activeProps
       );
+      this.children = children;
       if (!!GKeyArray) {
         GKeyArray.push(children)
       } else {
@@ -86,7 +89,7 @@ export default class Lightbox extends Component {
     swipeToDismiss : this.props.swipeToDismiss,
     springConfig   : this.props.springConfig,
     backgroundColor: this.props.backgroundColor,
-    children       : this.props.children,//this.getContent(),
+    children       : this.children, //this.props.children,//this.getContent(),
     activeProps    : this.props.activeProps,
     images         : this.props.images,
     renderContent  : this.props.renderContent,
@@ -180,7 +183,7 @@ export default class Lightbox extends Component {
         </Animated.View>
         {
           this.props.navigator ? false :
-            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey} {...this.getOverlayProps()} />
+            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey} currentIndex={this.props.currentIndex} {...this.getOverlayProps()} />
         }
       </View>
     );
