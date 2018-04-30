@@ -210,9 +210,6 @@ export default class LightboxOverlay extends Component {
         }
       },
       onPanResponderMove                : (evt, gestureState) => {
-        this.hideIcons = false;
-        clearTimeout(this.tap4toggle);
-
         // zoom
         if (gestureState.numberActiveTouches === 2) {
           // let dx = Math.abs(evt.nativeEvent.touches[0].pageX - evt.nativeEvent.touches[1].pageX);
@@ -229,9 +226,12 @@ export default class LightboxOverlay extends Component {
             let offsetX = this.state.lastX + gestureState.dx / this.state.scale;
             let offsetY = this.state.lastY + gestureState.dy / this.state.scale;
             this.setState({ offsetX, offsetY });
+            this.hideIcons = true;
+            clearTimeout(this.tap4toggle);
           } else { // swipe
             if (this.props.galleryMode && !this.state.isSwiping && Math.abs(gestureState.dx) > DRAG_SWIPE_THRESHOLD) {
               this.swiper(gestureState.dx < 0)
+              this.hideIcons = false;
             }
             this.state.pan.setValue(gestureState.dy);
           }
