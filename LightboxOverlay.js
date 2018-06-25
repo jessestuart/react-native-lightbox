@@ -142,7 +142,7 @@ export default class LightboxOverlay extends Component {
   preScale = 1;
 
   getContent = () => {
-    var children = null;
+    let children = null;
     if (this.props.renderContent) {
       return this.props.renderContent();
     }
@@ -307,7 +307,7 @@ export default class LightboxOverlay extends Component {
     const { prevTouchX, prevTouchY, prevTouchTimeStamp } = this.prevTouchInfo;
     const dt = currentTouchTimeStamp - prevTouchTimeStamp;
 
-    var ret = (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
+    const ret = (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
     if (ret) {
       clearTimeout(this.tap4toggle);
     }
@@ -368,12 +368,12 @@ export default class LightboxOverlay extends Component {
   }
 
   swiper = (forward) => {
-    var galleryKeyArray = global.gallery.get(this.props.GKey) || [];
+    const galleryKeyArray = global.gallery.get(this.props.GKey) || [];
     if (!galleryKeyArray || !galleryKeyArray.length) {
       return;
     }
-    var currentIndex = this.state.currentIndex || this.props.currentIndex;
-    var nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
+    const currentIndex = this.state.currentIndex || this.props.currentIndex;
+    const nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
 
     this.setState({
       currentIndex   : nextIndex,
@@ -457,7 +457,7 @@ export default class LightboxOverlay extends Component {
 
 
     // 拖动或是释放时动态隐藏图片
-    var imageOpacityStyle = {}
+    let imageOpacityStyle = {}
     if (isPanning || this.isReleaseing) {
       imageOpacityStyle = {
         opacity: this.state.pan.interpolate({
