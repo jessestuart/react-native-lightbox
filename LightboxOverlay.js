@@ -369,7 +369,10 @@ export default class LightboxOverlay extends Component {
 
   swiper = (forward) => {
     var galleryKeyArray = global.gallery.get(this.props.GKey) || [];
-    currentIndex = this.state.currentIndex || this.props.currentIndex;
+    if (!galleryKeyArray || !galleryKeyArray.length) {
+      return;
+    }
+    var currentIndex = this.state.currentIndex || this.props.currentIndex;
     var nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
 
     this.setState({
