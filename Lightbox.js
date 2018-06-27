@@ -58,23 +58,20 @@ export default class Lightbox extends Component {
   };
 
   componentWillMount() {
+    var children = cloneElement(
+      Children.only(this.props.children),
+      this.props.activeProps
+    );
+    this.children = children;
     if (this.props.galleryMode) {
       var GKeyArray = global.gallery.get(this.props.GKey);
-
-      var children = cloneElement(
-        Children.only(this.props.children),
-        this.props.activeProps
-      );
-      this.children = children;
       if (!!GKeyArray) {
         GKeyArray.push(children)
       } else {
         GKeyArray = [ children ]
       }
-
       global.gallery.set(this.props.GKey, GKeyArray);
     }
-
   }
 
   componentWillUnmount() {
