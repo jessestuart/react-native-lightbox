@@ -147,6 +147,17 @@ export default class LightboxOverlay extends Component {
     if (this.props.renderContent) {
       return this.props.renderContent();
     }
+    // else if (this.props.images) {
+    //   console.log(this.props.images)
+    //   return this.props.images.map((tmp, index_b) => (
+    //     <Image
+    //       key={index_b}
+    //       source={{ uri: tmp.url || tmp }}
+    //       style={{ width: '100%', height: 200 }}
+    //       resizeMode={Image.resizeMode.contain}
+    //     />
+    //   ))
+    // }
     else if (this.props.activeProps) {
       children = cloneElement(
         Children.only(this.state.currentChildren),
@@ -354,6 +365,8 @@ export default class LightboxOverlay extends Component {
     const currentIndex = this.state.currentIndex || this.props.currentIndex;
     const nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
     // TODO scroll animation
+
+    this.hideIcons = false;
     this.setState({
       currentIndex   : nextIndex,
       currentChildren: galleryKeyArray[ nextIndex ],
