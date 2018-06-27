@@ -140,6 +140,7 @@ export default class LightboxOverlay extends Component {
   };
   isReleaseing = false;
   preScale = 1;
+  hideIcons = false;
 
   getContent = () => {
     let children = null;
@@ -226,12 +227,9 @@ export default class LightboxOverlay extends Component {
             let offsetX = this.state.lastX + gestureState.dx / this.state.scale;
             let offsetY = this.state.lastY + gestureState.dy / this.state.scale;
             this.setState({ offsetX, offsetY });
-            this.hideIcons = true;
-            clearTimeout(this.tap4toggle);
           } else { // swipe
             if (this.props.galleryMode && !this.state.isSwiping && Math.abs(gestureState.dx) > DRAG_SWIPE_THRESHOLD) {
               this.swiper(gestureState.dx < 0)
-              this.hideIcons = false;
             }
             this.state.pan.setValue(gestureState.dy);
           }
@@ -291,39 +289,33 @@ export default class LightboxOverlay extends Component {
   }
 
   // is one tap or not
-  tap4toggle = null;
-
   tap(currentTouchTimeStamp, { x0, y0 }) {
-    this.tap4toggle = setTimeout(() => {
-      if (this.state.scale > 1) {
-        this.hideIcons = true
-      }
+    if (!this.state.scale || this.state.scale <= 1) {
       this.toggleIcons();
-    }, this.delay / 3);
+    }
   }
 
   // is double tap or not
   isDoubleTap(currentTouchTimeStamp, { x0, y0 }) {
     const { prevTouchX, prevTouchY, prevTouchTimeStamp } = this.prevTouchInfo;
     const dt = currentTouchTimeStamp - prevTouchTimeStamp;
-
     const ret = (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
-    if (ret) {
-      clearTimeout(this.tap4toggle);
-    }
-
     return ret;
   }
 
-  toggleIcons() {
-    this.hideIcons = !this.hideIcons;
+  toggleIcons(status) {
+    this.hideIcons = status !== undefined ? status : !this.hideIcons;
   }
 
   doubleTapZoom() {
     if (this.state.scale !== 1) {
+      console.log('reset?')
+      this.hideIcons = false;
       this.resetOverlay();
     } else {
-      this.hideIcons = true
+      console.log('scale to large ?')
+
+      this.hideIcons = true;
       this.setState({
         scale    : 1.8,
         lastScale: 1.8,
@@ -333,6 +325,7 @@ export default class LightboxOverlay extends Component {
 
   // reset children
   resetOverlay() {
+    this.hideIcons = false;
     this.setState({
       scale    : 1,
       lastScale: 1,
@@ -374,7 +367,7 @@ export default class LightboxOverlay extends Component {
     }
     const currentIndex = this.state.currentIndex || this.props.currentIndex;
     const nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
-
+    // TODO scroll animation
     this.setState({
       currentIndex   : nextIndex,
       currentChildren: galleryKeyArray[ nextIndex ],
@@ -422,9 +415,6 @@ export default class LightboxOverlay extends Component {
   }
 
   render() {
-    // var galleryKeyArray = global.gallery.get(this.props.GKey);
-    // console.log('render index:' + galleryKeyArray.map((e) => {return e._owner}).indexOf(this.state.currentChildren._owner));
-
     const {
             isOpen,
             renderHeader,
@@ -497,7 +487,7 @@ export default class LightboxOverlay extends Component {
       height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
     } ];
 
-    const hideIconsStyle = { display: (this.hideIcons) ? 'none' : 'flex' }
+    const hideIconsStyle = { display: (this.hideIcons || this.state.scale > 1) ? 'none' : 'flex' }
     this.preScale = this.state.scale;
 
 
