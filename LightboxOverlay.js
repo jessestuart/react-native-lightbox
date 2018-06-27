@@ -400,7 +400,7 @@ export default class LightboxOverlay extends Component {
     Animated.parallel([
       Animated.spring(
         this.state.openVal, {
-          toValue: 1, ...this.props.springConfig
+          toValue: 0, ...this.props.springConfig
         }),
 
       Animated.timing(this.state.pan, {
