@@ -397,25 +397,18 @@ export default class LightboxOverlay extends Component {
       isAnimating : true,
     });
 
-    Animated.parallel([
-      Animated.spring(
-        this.state.openVal, {
-          toValue: 0, ...this.props.springConfig
-        }),
-
-      Animated.timing(this.state.pan, {
-        toValue : gestureStateDy < 0 ? -WINDOW_HEIGHT : WINDOW_HEIGHT, // 目标值
-        duration: 200, // 动画时间
-        easing  : Easing.in // 缓动函数
-      })
-    ]).start(() => {
+    Animated.timing(this.state.pan, {
+      toValue : gestureStateDy < 0 ? -WINDOW_HEIGHT : WINDOW_HEIGHT, // 目标值
+      duration: 200, // 动画时间
+      easing  : Easing.in // 缓动函数
+    }).start(() => {
+      this.state.openVal.setValue(0);
       this.setState({
         isAnimating: false,
       });
       this.props.onClose();
       this.resetOverlay();
     });
-
   }
 
   componentWillReceiveProps(props) {
