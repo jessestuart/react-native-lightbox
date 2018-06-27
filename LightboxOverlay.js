@@ -147,17 +147,6 @@ export default class LightboxOverlay extends Component {
     if (this.props.renderContent) {
       return this.props.renderContent();
     }
-    // else if (this.props.images) {
-    //   console.log(this.props.images)
-    //   return this.props.images.map((tmp, index_b) => (
-    //     <Image
-    //       key={index_b}
-    //       source={{ uri: tmp.url || tmp }}
-    //       style={{ width: '100%', height: 200 }}
-    //       resizeMode={Image.resizeMode.contain}
-    //     />
-    //   ))
-    // }
     else if (this.props.activeProps) {
       children = cloneElement(
         Children.only(this.state.currentChildren),
@@ -309,12 +298,9 @@ export default class LightboxOverlay extends Component {
 
   doubleTapZoom() {
     if (this.state.scale !== 1) {
-      console.log('reset?')
       this.hideIcons = false;
       this.resetOverlay();
     } else {
-      console.log('scale to large ?')
-
       this.hideIcons = true;
       this.setState({
         scale    : 1.8,
