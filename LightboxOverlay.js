@@ -486,10 +486,7 @@ export default class LightboxOverlay extends Component {
       height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
     } ];
 
-    const hideIconsStyle = null//{ display: (this.hideIcons || this.state.scale > 1) ? 'none' : 'flex' }
-    if (this.hideIcons || this.state.scale > 1) {
-      lightboxOpacityStyle.opacity = new Animated.Value(0)
-    }
+    const hideIconsStyle = { display: (this.hideIcons || this.state.scale > 1) ? 'none' : 'flex' }
     this.preScale = this.state.scale;
 
 
