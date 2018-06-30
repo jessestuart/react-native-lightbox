@@ -1,9 +1,10 @@
 import React, { Component, Children, cloneElement } from 'react';
 import PropTypes from 'prop-types';
-import { Animated, TouchableHighlight, View } from 'react-native';
+import { Animated, StatusBar, TouchableHighlight, View } from 'react-native';
 
 import LightboxOverlay from './LightboxOverlay';
 import './Gallery';
+const isIOS = Platform.OS === 'ios';
 
 export default class Lightbox extends Component {
   static propTypes = {
@@ -137,6 +138,9 @@ export default class Lightbox extends Component {
 
   onClose = () => {
     this.state.layoutOpacity.setValue(1);
+    if (isIOS) {
+      StatusBar.setHidden(false, 'fade');
+    }
     this.setState({
       isOpen: false,
     }, this.props.onClose);
