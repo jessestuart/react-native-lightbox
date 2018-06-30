@@ -245,7 +245,6 @@ export default class LightboxOverlay extends Component {
             lastScale: this.state.scale
           });
         } else {
-          // this.resetOverlay();
           if (Math.abs(gestureState.dy) > DRAG_DISMISS_THRESHOLD) {
             // hide overlay
             this.setState({
@@ -254,12 +253,9 @@ export default class LightboxOverlay extends Component {
               target      : {
                 y      : WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
                 x      : gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
-                // opacity: 1 - Math.abs(gestureState.dy / WINDOW_HEIGHT)
-                // offsetY: 1.5 * WINDOW_HEIGHT,
                 opacity: 0
               }
             });
-
             this.isReleaseing = true;
             this.hideIcons = false;
             this.close(gestureState.dy);
@@ -375,10 +371,19 @@ export default class LightboxOverlay extends Component {
   }
 
   close = (gestureStateDy) => {
-    if (!gestureStateDy) {
-      gestureStateDy = 0
+    if (typeof gestureStateDy !== 'number') {
+      gestureStateDy = -150
+      this.setState({
+        isPanning   : false,
+        isReleaseing: true,
+        target      : {
+          y      : WINDOW_HEIGHT,
+          x      : 33,
+          opacity: 0
+        }
+      });
+      this.isReleaseing = true;
     }
-
     this.hideIcons = false;
     this.props.willClose();
     if (isIOS) {
