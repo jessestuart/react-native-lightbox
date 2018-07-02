@@ -1,9 +1,10 @@
 import React, { Component, Children, cloneElement } from 'react';
 import PropTypes from 'prop-types';
-import { Animated, StatusBar, TouchableHighlight, View } from 'react-native';
+import { Animated, StatusBar, TouchableHighlight, View, Platform, StatusBar } from 'react-native';
 
 import LightboxOverlay from './LightboxOverlay';
 import './Gallery';
+
 const isIOS = Platform.OS === 'ios';
 
 export default class Lightbox extends Component {
@@ -184,7 +185,8 @@ export default class Lightbox extends Component {
         </Animated.View>
         {
           this.props.navigator ? false :
-            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey} currentIndex={this.props.currentIndex} {...this.getOverlayProps()} />
+            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey}
+                             currentIndex={this.props.currentIndex} {...this.getOverlayProps()} />
         }
       </View>
     );
