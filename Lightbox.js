@@ -1,6 +1,6 @@
 import React, { Component, Children, cloneElement } from 'react';
 import PropTypes from 'prop-types';
-import { Animated, StatusBar, TouchableHighlight, View, Platform, StatusBar } from 'react-native';
+import { Animated, StatusBar, TouchableHighlight, View, Platform } from 'react-native';
 
 import LightboxOverlay from './LightboxOverlay';
 import './Gallery';

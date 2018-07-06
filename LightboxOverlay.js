@@ -286,7 +286,7 @@ export default class LightboxOverlay extends Component {
 
   // is one tap or not
   tap(currentTouchTimeStamp, { x0, y0 }) {
-    if (!this.state.scale || this.state.scale <= 1) {
+    if (!this.state.isPanning && (!this.state.scale || this.state.scale <= 1)) {
       this.toggleIcons();
     }
   }
