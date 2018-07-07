@@ -147,17 +147,6 @@ export default class LightboxOverlay extends Component {
     if (this.props.renderContent) {
       return this.props.renderContent();
     }
-    // else if (this.props.images) {
-    //   console.log(this.props.images)
-    //   return this.props.images.map((tmp, index_b) => (
-    //     <Image
-    //       key={index_b}
-    //       source={{ uri: tmp.url || tmp }}
-    //       style={{ width: '100%', height: 200 }}
-    //       resizeMode={Image.resizeMode.contain}
-    //     />
-    //   ))
-    // }
     else if (this.props.activeProps) {
       children = cloneElement(
         Children.only(this.state.currentChildren),
@@ -279,6 +268,10 @@ export default class LightboxOverlay extends Component {
     }
   }
 
+  componentWillUnmount() {
+    this.state.openVal.setValue(0);
+  }
+
   // calculate distance between presses
   distance(x0, y0, x1, y1) {
     return Math.sqrt(Math.pow((x1 - x0), 2) + Math.pow((y1 - y0), 2));
@@ -368,6 +361,10 @@ export default class LightboxOverlay extends Component {
       currentChildren: galleryKeyArray[ nextIndex ],
       isSwiping      : true,
     });
+  }
+
+  resetOpenVal = () => {
+    this.state.openVal.setValue(0);
   }
 
   close = (gestureStateDy) => {

@@ -142,6 +142,10 @@ export default class Lightbox extends Component {
     if (isIOS) {
       StatusBar.setHidden(false, 'fade');
     }
+    // reset openval 为了重新的动画效果
+    if (this.refs && this.refs.ligthBoxOverlay && this.refs.ligthBoxOverlay.resetOpenVal) {
+      this.refs.ligthBoxOverlay.resetOpenVal();
+    }
     this.setState({
       isOpen: false,
     }, this.props.onClose);
@@ -185,7 +189,7 @@ export default class Lightbox extends Component {
         </Animated.View>
         {
           this.props.navigator ? false :
-            <LightboxOverlay galleryMode={this.props.galleryMode} GKey={this.props.GKey}
+            <LightboxOverlay ref='ligthBoxOverlay' galleryMode={this.props.galleryMode} GKey={this.props.GKey}
                              currentIndex={this.props.currentIndex} {...this.getOverlayProps()} />
         }
       </View>
