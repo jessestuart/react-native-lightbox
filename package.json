@@ -30,6 +30,11 @@
   },
   "homepage": "https://github.com/oblador/react-native-lightbox",
   "dependencies": {
-    "prop-types": "^15.5.10"
+    "prop-types": "^15.6.2",
+    "react": "^16.4.2",
+    "react-native": "^0.56.0"
+  },
+  "devDependencies": {
+    "@edenhealth/eslint-config-eve": "^1.1.0"
   }
 }

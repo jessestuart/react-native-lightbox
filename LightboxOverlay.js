@@ -1,5 +1,5 @@
-import React, { Component, Children, cloneElement } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, Children, cloneElement } from 'react'
+import PropTypes from 'prop-types'
 import {
   Animated,
   Dimensions,
@@ -11,398 +11,365 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Easing
-} from 'react-native';
-import Image from "react-native-fast-image";
-import { DEVICE } from "../../src/constants/device";
+  Easing,
+} from 'react-native'
 
-const WINDOW_HEIGHT = Dimensions.get('window').height;
-const WINDOW_WIDTH = Dimensions.get('window').width;
-const DRAG_DISMISS_THRESHOLD = 80;
-const DRAG_SWIPE_THRESHOLD = WINDOW_WIDTH / 5;
-// const STATUS_BAR_OFFSET = (Platform.OS === 'android' ? -25 : 0);
-const isIOS = Platform.OS === 'ios';
-
-const styles = StyleSheet.create({
-  background    : {
-    position: 'absolute',
-    top     : 0,
-    left    : 0,
-    width   : WINDOW_WIDTH,
-    height  : WINDOW_HEIGHT,
-  },
-  open          : {
-    position       : 'absolute',
-    flex           : 1,
-    justifyContent : 'center',
-    // Android pan handlers crash without this declaration:
-    backgroundColor: 'transparent',
-  },
-  header        : {
-    position       : 'absolute',
-    top            : 0,
-    left           : 0,
-    width          : WINDOW_WIDTH,
-    backgroundColor: 'transparent',
-  },
-  footer        : {
-    position       : 'absolute',
-    bottom         : 0,
-    left           : 0,
-    width          : WINDOW_WIDTH,
-    backgroundColor: 'transparent',
-  },
-  closeButtonBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius   : 20,
-    height         : 35,
-    width          : 35,
-    marginLeft     : 13,
-    marginTop      : 8,
-  },
-  closeButton   : {
-    fontSize     : 35,
-    fontWeight   : '200',
-    color        : 'white',
-    lineHeight   : 35,
-    width        : 35,
-    textAlign    : 'center',
-    shadowOffset : {
-      width : 0,
-      height: 0,
-    },
-    shadowRadius : 1.5,
-    shadowColor  : 'black',
-    shadowOpacity: 0.8,
-  },
-});
-
+const WINDOW_HEIGHT = Dimensions.get('window').height
+const WINDOW_WIDTH = Dimensions.get('window').width
+const DRAG_DISMISS_THRESHOLD = 80
+const DRAG_SWIPE_THRESHOLD = WINDOW_WIDTH / 5
+const isIOS = Platform.OS === 'ios'
 
 export default class LightboxOverlay extends Component {
   static propTypes = {
-    origin         : PropTypes.shape({
-      x     : PropTypes.number,
-      y     : PropTypes.number,
-      width : PropTypes.number,
+    origin: PropTypes.shape({
+      x: PropTypes.number,
+      y: PropTypes.number,
+      width: PropTypes.number,
       height: PropTypes.number,
     }),
-    springConfig   : PropTypes.shape({
-      tension : PropTypes.number,
+    springConfig: PropTypes.shape({
+      tension: PropTypes.number,
       friction: PropTypes.number,
     }),
     backgroundColor: PropTypes.string,
-    isOpen         : PropTypes.bool,
-    renderHeader   : PropTypes.func,
-    onOpen         : PropTypes.func,
-    onClose        : PropTypes.func,
-    willClose      : PropTypes.func,
-    swipeToDismiss : PropTypes.bool,
-    scalable       : PropTypes.bool, // can be zoomed or not
-  };
+    isOpen: PropTypes.bool,
+    renderHeader: PropTypes.func,
+    onOpen: PropTypes.func,
+    onClose: PropTypes.func,
+    willClose: PropTypes.func,
+    swipeToDismiss: PropTypes.bool,
+    scalable: PropTypes.bool, // can be zoomed or not
+  }
 
   static defaultProps = {
-    springConfig   : { tension: 30, friction: 7 },
+    springConfig: { tension: 30, friction: 7 },
     backgroundColor: 'black',
-    scalable       : true,
-  };
+    scalable: true,
+  }
 
   state = {
-    isAnimating : false,
-    isPanning   : false,
+    isAnimating: false,
+    isPanning: false,
     isReleaseing: false,
-    isSwiping   : false,
-    target      : {
-      x      : 0,
-      y      : 0,
+    isSwiping: false,
+    target: {
+      x: 0,
+      y: 0,
       opacity: 1,
     },
-    pan         : new Animated.Value(0),
-    openVal     : new Animated.Value(0),
-    footerAni   : new Animated.Value(0),
+    pan: new Animated.Value(0),
+    openVal: new Animated.Value(0),
+    footerAni: new Animated.Value(0),
     // for scalable
-    scale       : 1,
-    lastScale   : 1,
-    offsetX     : 0,
-    offsetY     : 0,
-    lastX       : 0,
-    lastY       : 0,
+    scale: 1,
+    lastScale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    lastX: 0,
+    lastY: 0,
 
     currentChildren: this.props.children,
-  };
+  }
 
-  distant = 150;
-  delay = 300;
-  radius = 20;
+  distant = 150
+  delay = 300
+  radius = 20
   prevTouchInfo = {
-    prevTouchX        : 0,
-    prevTouchY        : 0,
+    prevTouchX: 0,
+    prevTouchY: 0,
     prevTouchTimeStamp: 0,
-  };
-  isReleaseing = false;
-  preScale = 1;
-  hideIcons = false;
+  }
+  isReleaseing = false
+  preScale = 1
+  hideIcons = false
 
   getContent = () => {
-    let children = null;
+    let children = null
     if (this.props.renderContent) {
-      return this.props.renderContent();
-    }
-    else if (this.props.activeProps) {
+      return this.props.renderContent()
+    } else if (this.props.activeProps) {
       children = cloneElement(
         Children.only(this.state.currentChildren),
         this.props.activeProps
-      );
-    } else {
-      children = cloneElement(
-        Children.only(this.state.currentChildren)
       )
+    } else {
+      children = cloneElement(Children.only(this.state.currentChildren))
     }
 
-    return children;
+    return children
     // return this.state.currentChildren;
   }
 
   componentWillMount() {
     this.setState({
       currentIndex: this.props.currentIndex,
-    });
+    })
 
     this._panResponder = PanResponder.create({
       // Ask to be the responder:
-      onStartShouldSetPanResponder      : (evt, gestureState) => {
-        return true; //!this.state.isAnimating;
+      onStartShouldSetPanResponder: (evt, gestureState) => {
+        return true //!this.state.isAnimating;
       },
-      onMoveShouldSetPanResponder       : (evt, gestureState) => {
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
         if (this.state.isAnimating) {
-          return false;
+          return false
         } else {
-          return this.props.scalable && gestureState.dx > 2 || gestureState.dy > 2 || gestureState.numberActiveTouches === 2;
+          return (
+            (this.props.scalable && gestureState.dx > 2) ||
+            gestureState.dy > 2 ||
+            gestureState.numberActiveTouches === 2
+          )
         }
       },
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => !this.state.isAnimating,
-      onPanResponderGrant               : (evt, gestureState) => {
-        const currentTouchTimeStamp = Date.now();
-        this.state.pan.setValue(0);
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) =>
+        !this.state.isAnimating,
+      onPanResponderGrant: (evt, gestureState) => {
+        const currentTouchTimeStamp = Date.now()
+        this.state.pan.setValue(0)
         this.setState({
           isPanning: true,
-        });
+        })
         if (this.isDoubleTap(currentTouchTimeStamp, gestureState)) {
-          this.doubleTapZoom();
+          this.doubleTapZoom()
         }
-        this.tap(currentTouchTimeStamp, gestureState);
+        this.tap(currentTouchTimeStamp, gestureState)
         this.prevTouchInfo = {
-          prevTouchX        : gestureState.x0,
-          prevTouchY        : gestureState.y0,
+          prevTouchX: gestureState.x0,
+          prevTouchY: gestureState.y0,
           prevTouchTimeStamp: currentTouchTimeStamp,
-        };
+        }
         if (gestureState.numberActiveTouches === 2) {
-          this.distant = this.distance(evt.nativeEvent.touches[ 0 ].pageX, evt.nativeEvent.touches[ 0 ].pageY, evt.nativeEvent.touches[ 1 ].pageX, evt.nativeEvent.touches[ 1 ].pageY);
+          this.distant = this.distance(
+            evt.nativeEvent.touches[0].pageX,
+            evt.nativeEvent.touches[0].pageY,
+            evt.nativeEvent.touches[1].pageX,
+            evt.nativeEvent.touches[1].pageY
+          )
         }
       },
-      onPanResponderMove                : (evt, gestureState) => {
+      onPanResponderMove: (evt, gestureState) => {
         // zoom
         if (gestureState.numberActiveTouches === 2) {
           // let dx = Math.abs(evt.nativeEvent.touches[0].pageX - evt.nativeEvent.touches[1].pageX);
           // let dy = Math.abs(evt.nativeEvent.touches[0].pageY - evt.nativeEvent.touches[1].pageY);
           // let distant = Math.sqrt(dx * dx + dy * dy);
 
-          let distant = this.distance(evt.nativeEvent.touches[ 0 ].pageX, evt.nativeEvent.touches[ 0 ].pageY, evt.nativeEvent.touches[ 1 ].pageX, evt.nativeEvent.touches[ 1 ].pageY);
-          let scale = distant / this.distant * this.state.lastScale;
-          this.setState({ scale });
+          let distant = this.distance(
+            evt.nativeEvent.touches[0].pageX,
+            evt.nativeEvent.touches[0].pageY,
+            evt.nativeEvent.touches[1].pageX,
+            evt.nativeEvent.touches[1].pageY
+          )
+          let scale = (distant / this.distant) * this.state.lastScale
+          this.setState({ scale })
         }
         // translate
         else {
           if (gestureState.numberActiveTouches === 1 && this.state.scale > 1) {
-            let offsetX = this.state.lastX + gestureState.dx / this.state.scale;
-            let offsetY = this.state.lastY + gestureState.dy / this.state.scale;
-            this.setState({ offsetX, offsetY });
-          } else { // swipe
-            if (this.props.galleryMode && !this.state.isSwiping && Math.abs(gestureState.dx) > DRAG_SWIPE_THRESHOLD) {
+            let offsetX = this.state.lastX + gestureState.dx / this.state.scale
+            let offsetY = this.state.lastY + gestureState.dy / this.state.scale
+            this.setState({ offsetX, offsetY })
+          } else {
+            // swipe
+            if (
+              this.props.galleryMode &&
+              !this.state.isSwiping &&
+              Math.abs(gestureState.dx) > DRAG_SWIPE_THRESHOLD
+            ) {
               this.swiper(gestureState.dx < 0)
             }
-            this.state.pan.setValue(gestureState.dy);
+            this.state.pan.setValue(gestureState.dy)
           }
         }
       },
 
       onPanResponderTerminationRequest: (evt, gestureState) => false,
-      onPanResponderRelease           : (evt, gestureState) => {
+      onPanResponderRelease: (evt, gestureState) => {
         if (this.state.scale > 1) {
           this.setState({
-            lastX    : this.state.offsetX,
-            lastY    : this.state.offsetY,
-            lastScale: this.state.scale
-          });
+            lastX: this.state.offsetX,
+            lastY: this.state.offsetY,
+            lastScale: this.state.scale,
+          })
         } else {
           if (Math.abs(gestureState.dy) > DRAG_DISMISS_THRESHOLD) {
             // hide overlay
             this.setState({
-              isPanning   : false,
+              isPanning: false,
               isReleaseing: true,
-              target      : {
-                y      : WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
-                x      : gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
-                opacity: 0
-              }
-            });
-            this.isReleaseing = true;
-            this.hideIcons = false;
-            this.close(gestureState.dy);
+              target: {
+                y: WINDOW_HEIGHT, //gestureState.dy,//gestureState.dY, // WINDOW_HEIGHT, //gestureState.dy,
+                x: gestureState.dx, // WINDOW_WIDTH / 2, //gestureState.dx,
+                opacity: 0,
+              },
+            })
+            this.isReleaseing = true
+            this.hideIcons = false
+            this.close(gestureState.dy)
           } else {
-            Animated.spring(
-              this.state.pan,
-              { toValue: 0, ...this.props.springConfig }
-            ).start(() => {
-              this.setState({ isPanning: false, isSwiping: false });
-            });
+            Animated.spring(this.state.pan, {
+              toValue: 0,
+              ...this.props.springConfig,
+            }).start(() => {
+              this.setState({ isPanning: false, isSwiping: false })
+            })
           }
         }
       },
-      onShouldBlockNativeResponder    : evt => false,
-    });
+      onShouldBlockNativeResponder: evt => false,
+    })
   }
 
   componentDidMount() {
     if (this.props.isOpen) {
-      this.open();
+      this.open()
     }
   }
 
   componentWillUnmount() {
-    this.state.openVal.setValue(0);
+    this.state.openVal.setValue(0)
   }
 
   // calculate distance between presses
   distance(x0, y0, x1, y1) {
-    return Math.sqrt(Math.pow((x1 - x0), 2) + Math.pow((y1 - y0), 2));
+    return Math.sqrt(Math.pow(x1 - x0, 2) + Math.pow(y1 - y0, 2))
   }
 
   // is one tap or not
   tap(currentTouchTimeStamp, { x0, y0 }) {
     if (!this.state.isPanning && (!this.state.scale || this.state.scale <= 1)) {
-      this.toggleIcons();
+      this.toggleIcons()
     }
   }
 
   // is double tap or not
   isDoubleTap(currentTouchTimeStamp, { x0, y0 }) {
-    const { prevTouchX, prevTouchY, prevTouchTimeStamp } = this.prevTouchInfo;
-    const dt = currentTouchTimeStamp - prevTouchTimeStamp;
-    const ret = (dt < this.delay && this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius);
-    return ret;
+    const { prevTouchX, prevTouchY, prevTouchTimeStamp } = this.prevTouchInfo
+    const dt = currentTouchTimeStamp - prevTouchTimeStamp
+    const ret =
+      dt < this.delay &&
+      this.distance(prevTouchX, prevTouchY, x0, y0) < this.radius
+    return ret
   }
 
   toggleIcons(status) {
-    this.hideIcons = status !== undefined ? status : !this.hideIcons;
+    this.hideIcons = status !== undefined ? status : !this.hideIcons
   }
 
   doubleTapZoom() {
     if (this.state.scale !== 1) {
-      this.hideIcons = false;
-      this.resetOverlay();
+      this.hideIcons = false
+      this.resetOverlay()
     } else {
-      this.hideIcons = true;
+      this.hideIcons = true
       this.setState({
-        scale    : 1.8,
+        scale: 1.8,
         lastScale: 1.8,
-      });
+      })
     }
   }
 
   // reset children
   resetOverlay() {
-    this.hideIcons = false;
+    this.hideIcons = false
     this.setState({
-      scale    : 1,
+      scale: 1,
       lastScale: 1,
-      offsetX  : 0,
-      offsetY  : 0,
-      lastX    : 0,
-      lastY    : 0
-    });
+      offsetX: 0,
+      offsetY: 0,
+      lastX: 0,
+      lastY: 0,
+    })
   }
 
   open = () => {
     if (isIOS) {
-      StatusBar.setHidden(true, 'fade');
+      StatusBar.setHidden(true, 'fade')
     }
-    this.state.pan.setValue(0);
+    this.state.pan.setValue(0)
     this.setState({
       isAnimating: true,
-      target     : {
-        x      : 0,
-        y      : 0,
+      target: {
+        x: 0,
+        y: 0,
         opacity: 1,
-      }
-    });
-    this.isReleaseing = false;
+      },
+    })
+    this.isReleaseing = false
 
-    Animated.spring(
-      this.state.openVal,
-      { toValue: 1, ...this.props.springConfig }
-    ).start(() => {
-      this.setState({ isAnimating: false });
-      this.props.didOpen();
-    });
+    Animated.spring(this.state.openVal, {
+      toValue: 1,
+      ...this.props.springConfig,
+    }).start(() => {
+      this.setState({ isAnimating: false })
+      this.props.didOpen()
+    })
   }
 
-  swiper = (forward) => {
-    const galleryKeyArray = global.gallery.get(this.props.GKey) || [];
+  swiper = forward => {
+    const galleryKeyArray = global.gallery.get(this.props.GKey) || []
     if (!galleryKeyArray || !galleryKeyArray.length) {
-      return;
+      return
     }
-    const currentIndex = this.state.currentIndex || this.props.currentIndex;
-    const nextIndex = forward ? (currentIndex + 1 >= galleryKeyArray.length ? 0 : currentIndex + 1) : (currentIndex < 1 ? galleryKeyArray.length - 1 : currentIndex - 1);
+    const currentIndex = this.state.currentIndex || this.props.currentIndex
+    const nextIndex = forward
+      ? currentIndex + 1 >= galleryKeyArray.length
+        ? 0
+        : currentIndex + 1
+      : currentIndex < 1
+        ? galleryKeyArray.length - 1
+        : currentIndex - 1
     // TODO scroll animation
 
-    this.hideIcons = false;
+    this.hideIcons = false
     this.setState({
-      currentIndex   : nextIndex,
-      currentChildren: galleryKeyArray[ nextIndex ],
-      isSwiping      : true,
-    });
+      currentIndex: nextIndex,
+      currentChildren: galleryKeyArray[nextIndex],
+      isSwiping: true,
+    })
   }
 
   resetOpenVal = () => {
-    this.state.openVal.setValue(0);
+    this.state.openVal.setValue(0)
   }
 
-  close = (gestureStateDy) => {
+  close = gestureStateDy => {
     if (typeof gestureStateDy !== 'number') {
       gestureStateDy = -150
       this.setState({
-        isPanning   : false,
+        isPanning: false,
         isReleaseing: true,
-        target      : {
-          y      : WINDOW_HEIGHT,
-          x      : 33,
-          opacity: 0
-        }
-      });
-      this.isReleaseing = true;
+        target: {
+          y: WINDOW_HEIGHT,
+          x: 33,
+          opacity: 0,
+        },
+      })
+      this.isReleaseing = true
     }
-    this.hideIcons = false;
-    this.props.willClose();
+    this.hideIcons = false
+    this.props.willClose()
     if (isIOS) {
-      StatusBar.setHidden(false, 'fade');
+      StatusBar.setHidden(false, 'fade')
     }
     this.setState({
       currentIndex: 0,
-      isAnimating : true,
-    });
+      isAnimating: true,
+    })
 
     Animated.timing(this.state.pan, {
-      toValue : gestureStateDy < 0 ? -WINDOW_HEIGHT : WINDOW_HEIGHT, // 目标值
+      toValue: gestureStateDy < 0 ? -WINDOW_HEIGHT : WINDOW_HEIGHT, // 目标值
       duration: 200, // 动画时间
-      easing  : Easing.in // 缓动函数
+      easing: Easing.in, // 缓动函数
     }).start(() => {
-      this.state.openVal.setValue(0);
+      this.state.openVal.setValue(0)
       this.setState({
         isAnimating: false,
-      });
-      this.props.onClose();
-      this.resetOverlay();
-    });
+      })
+      this.props.onClose()
+      this.resetOverlay()
+    })
   }
 
   componentWillReceiveProps(props) {
@@ -411,120 +378,162 @@ export default class LightboxOverlay extends Component {
       currentChildren: props.children,
     })
     if (this.props.isOpen != props.isOpen && props.isOpen) {
-      this.open();
+      this.open()
     }
   }
 
   render() {
     const {
-            isOpen,
-            renderHeader,
-            renderFooter,
-            swipeToDismiss,
-            scalable,
-            origin,
-            backgroundColor,
-            currentIndex,
-          } = this.props;
+      isOpen,
+      renderHeader,
+      renderFooter,
+      swipeToDismiss,
+      scalable,
+      origin,
+      backgroundColor,
+      currentIndex,
+    } = this.props
 
-    const {
-            isPanning,
-            isAnimating,
-            openVal,
-            target,
-          } = this.state;
-
+    const { isPanning, isAnimating, openVal, target } = this.state
 
     const lightboxOpacityStyle = {
-      opacity: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ 0, target.opacity ] })
-    };
-
+      opacity: openVal.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, target.opacity],
+      }),
+    }
 
     // 拖动或是释放时动态隐藏图片
     let imageOpacityStyle = {}
     if (isPanning || this.isReleaseing) {
       imageOpacityStyle = {
         opacity: this.state.pan.interpolate({
-          inputRange : [ -WINDOW_HEIGHT, 0, WINDOW_HEIGHT ],
-          outputRange: [ 0.9, 1, 0.9 ]
+          inputRange: [-WINDOW_HEIGHT, 0, WINDOW_HEIGHT],
+          outputRange: [0.9, 1, 0.9],
         }),
-      };
-      imageOpacityStyle.top = this.state.pan;
-      imageOpacityStyle.left = 0;
+      }
+      imageOpacityStyle.top = this.state.pan
+      imageOpacityStyle.left = 0
     }
 
-    let handlers;
+    let handlers
     if (swipeToDismiss || scalable) {
-      handlers = this._panResponder.panHandlers;
+      handlers = this._panResponder.panHandlers
     }
 
-    let dragStyle = {};
-    let footerAniStyle = {};
-    let headerAniStyle = {};
+    let dragStyle = {}
+    let footerAniStyle = {}
+    let headerAniStyle = {}
     if (isPanning) {
       dragStyle = {
         top: this.state.pan,
-      };
+      }
       lightboxOpacityStyle.opacity = this.state.pan.interpolate({
-        inputRange : [ -WINDOW_HEIGHT, 0, WINDOW_HEIGHT ],
-        outputRange: [ 0, 1, 0 ]
-      });
+        inputRange: [-WINDOW_HEIGHT, 0, WINDOW_HEIGHT],
+        outputRange: [0, 1, 0],
+      })
 
       footerAniStyle.bottom = this.state.pan.interpolate({
-        inputRange : [ -40, 0, 40 ],
-        outputRange: [ -80, 0, -50 ]
-      });
+        inputRange: [-40, 0, 40],
+        outputRange: [-80, 0, -50],
+      })
 
       headerAniStyle.top = this.state.pan.interpolate({
-        inputRange : [ -40, 0, 40 ],
-        outputRange: [ -50, 0, -80 ]
-      });
+        inputRange: [-40, 0, 40],
+        outputRange: [-50, 0, -80],
+      })
     }
 
-    const openStyle = [ styles.open, {
-      left  : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.x, target.x ] }),
-      top   : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.y, target.y ] }),
-      width : openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.width, WINDOW_WIDTH ] }),
-      height: openVal.interpolate({ inputRange: [ 0, 1 ], outputRange: [ origin.height, WINDOW_HEIGHT ] }),
-    } ];
+    const openStyle = [
+      styles.open,
+      {
+        left: openVal.interpolate({
+          inputRange: [0, 1],
+          outputRange: [origin.x, target.x],
+        }),
+        top: openVal.interpolate({
+          inputRange: [0, 1],
+          outputRange: [origin.y, target.y],
+        }),
+        width: openVal.interpolate({
+          inputRange: [0, 1],
+          outputRange: [origin.width, WINDOW_WIDTH],
+        }),
+        height: openVal.interpolate({
+          inputRange: [0, 1],
+          outputRange: [origin.height, WINDOW_HEIGHT],
+        }),
+      },
+    ]
 
-    const hideIconsStyle = { display: (this.hideIcons || this.state.scale > 1) ? 'none' : 'flex' }
-    this.preScale = this.state.scale;
+    const hideIconsStyle = {
+      display: this.hideIcons || this.state.scale > 1 ? 'none' : 'flex',
+    }
+    this.preScale = this.state.scale
 
-
-    const background = (<Animated.View
-      style={[ styles.background, { backgroundColor: backgroundColor }, lightboxOpacityStyle ]}/>);
+    const background = (
+      <Animated.View
+        style={[
+          styles.background,
+          { backgroundColor: backgroundColor },
+          lightboxOpacityStyle,
+        ]}
+      />
+    )
 
     const header = (
-      <Animated.View style={[ styles.header, lightboxOpacityStyle, headerAniStyle, hideIconsStyle ]}>{(renderHeader ?
-          renderHeader(this.close) :
-          (
-            <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
-              <Text style={styles.closeButton}>×</Text>
-            </TouchableOpacity>
-          )
-      )}</Animated.View>);
+      <Animated.View
+        style={[
+          styles.header,
+          lightboxOpacityStyle,
+          headerAniStyle,
+          hideIconsStyle,
+        ]}
+      >
+        {renderHeader ? (
+          renderHeader(this.close)
+        ) : (
+          <TouchableOpacity onPress={this.close} style={styles.closeButtonBox}>
+            <Text style={styles.closeButton}>×</Text>
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+    )
 
     // todo when drag dispear , animation
     const content = (
-      <Animated.View style={[ openStyle, dragStyle, imageOpacityStyle, {
-        transform: [
-          { scaleX: this.state.scale },
-          { scaleY: this.state.scale },
-          { translateX: this.state.offsetX },
-          { translateY: this.state.offsetY }
-        ]
-      }
-      ]} {...handlers}>
+      <Animated.View
+        style={[
+          openStyle,
+          dragStyle,
+          imageOpacityStyle,
+          {
+            transform: [
+              { scaleX: this.state.scale },
+              { scaleY: this.state.scale },
+              { translateX: this.state.offsetX },
+              { translateY: this.state.offsetY },
+            ],
+          },
+        ]}
+        {...handlers}
+      >
         {this.getContent()}
       </Animated.View>
-    );
+    )
 
     const footer = (
       <Animated.View
-        style={[ styles.footer, lightboxOpacityStyle, footerAniStyle, hideIconsStyle ]}>
-        {(renderFooter ? renderFooter() : null)}
-      </Animated.View>);
+        style={[
+          styles.footer,
+          lightboxOpacityStyle,
+          footerAniStyle,
+          hideIconsStyle,
+        ]}
+      >
+        {renderFooter ? renderFooter() : null}
+      </Animated.View>
+    )
 
     if (this.props.navigator) {
       return (
@@ -534,16 +543,127 @@ export default class LightboxOverlay extends Component {
           {header}
           {footer}
         </View>
-      );
+      )
     }
 
     return (
-      <Modal visible={isOpen} transparent={true} onRequestClose={() => this.close()}>
+      <Modal
+        visible={isOpen}
+        transparent={true}
+        onRequestClose={() => this.close()}
+      >
         {background}
         {content}
         {header}
         {footer}
       </Modal>
-    );
+    )
   }
 }
+
+const styles = StyleSheet.create({
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+  },
+  open: {
+    position: 'absolute',
+    flex: 1,
+    justifyContent: 'center',
+    // Android pan handlers crash without this declaration:
+    backgroundColor: 'transparent',
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    backgroundColor: 'transparent',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    backgroundColor: 'transparent',
+  },
+  closeButtonBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    height: 35,
+    width: 35,
+    marginLeft: 13,
+    marginTop: 8,
+  },
+  closeButton: {
+    fontSize: 35,
+    fontWeight: '200',
+    color: 'white',
+    lineHeight: 35,
+    width: 35,
+    textAlign: 'center',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowRadius: 1.5,
+    shadowColor: 'black',
+    shadowOpacity: 0.8,
+  },
+})
+const styles = StyleSheet.create({
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+  },
+  open: {
+    position: 'absolute',
+    flex: 1,
+    justifyContent: 'center',
+    // Android pan handlers crash without this declaration:
+    backgroundColor: 'transparent',
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    backgroundColor: 'transparent',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: WINDOW_WIDTH,
+    backgroundColor: 'transparent',
+  },
+  closeButtonBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    height: 35,
+    width: 35,
+    marginLeft: 13,
+    marginTop: 8,
+  },
+  closeButton: {
+    fontSize: 35,
+    fontWeight: '200',
+    color: 'white',
+    lineHeight: 35,
+    width: 35,
+    textAlign: 'center',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowRadius: 1.5,
+    shadowColor: 'black',
+    shadowOpacity: 0.8,
+  },
+})
